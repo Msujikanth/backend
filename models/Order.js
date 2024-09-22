@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const orderSchema = new mongoose.Schema({
   customerName: { type: String, required: true }, // Name of the customer
   items: [{
-    name: String, // Name of the ordered dish
+    name: { type: String, required: true }, // Name of the ordered dish
     quantity: { type: Number, required: true } // Quantity of each dish
   }],
   totalPrice: { type: Number, required: true }, // Total price of the order
@@ -13,8 +13,7 @@ const orderSchema = new mongoose.Schema({
     enum: ['Pending', 'Confirmed', 'Preparing', 'Ready for Pickup', 'Completed'], 
     default: 'Pending' 
   }, // Order status
-  createdAt: { type: Date, default: Date.now } // Timestamp of the order
-});
+}, { timestamps: true }); // Enable createdAt and updatedAt timestamps automatically
 
 // Create the Order model
 const Order = mongoose.model('Order', orderSchema);

@@ -1,37 +1,44 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const cors = require('cors');  
+const cors = require('cors');
 const Menu = require('./models/Menu');  
 const Order = require('./models/Order');  
 const authRoutes = require('./routes/auth');
 const authMiddleware = require('./middleware/authMiddleware');
 const menuRoute = require('./routes/menu'); // Adjust the path as necessary
+const orderRoutes = require('./routes/orders'); // Assuming you will create this route file
 
 
 const app = express();
 
-
 // Middleware
 app.use(express.json());  // Parse JSON bodies
 app.use(cors());  // Use CORS middleware
-
-// Menu routes
-app.use('/menu', menuRoute);
+app.use('/uploads', express.static('uploads')); // Serve static files from the 'uploads' folder
 
 // Use authentication routes
 app.use('/api/auth', authRoutes);
 
+//order routes
+app.use('/api/orders', orderRoutes);
+
+// Menu routes
+app.use('/menu', menuRoute);
+
 // MongoDB connection
-mongoose.connect('mongodb://localhost/restaurantApp', { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect('mongodb://localhost/restaurantApp')
   .then(() => console.log('MongoDB connected'))
-  .catch(err => console.log(err));
+  .catch(err => {
+    console.log(err);
+    process.exit(1);  // Exit the process if MongoDB connection fails
+  });
 
 // Simple route to test
 app.get('/', (req, res) => {
   res.send('Backend is working!');
 });
 
-// Restaurant-only route to add a menu item
+// Restaurant-only route to add a menu item with authentication
 app.post('/menu/add', authMiddleware('restaurant'), async (req, res) => {
   const { name, price, description, category, availability } = req.body;
   try {
@@ -44,17 +51,6 @@ app.post('/menu/add', authMiddleware('restaurant'), async (req, res) => {
 });
 
 // Routes for Menu and Order
-app.post('/menu/add', async (req, res) => {
-  const { name, price, description, category, availability } = req.body;
-  try {
-    const newItem = new Menu({ name, price, description, category, availability });
-    await newItem.save();
-    res.status(201).json({ message: 'Menu item added successfully' });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to add menu item' });
-  }
-});
-
 app.get('/menu', async (req, res) => {
   try {
     const menu = await Menu.find(); 

@@ -1,8 +1,17 @@
 const express = require('express');
-const Menu = require('../models/Menu');  // Assuming Menu model is in models folder
+const Menu = require('../models/Menu');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
+
+// Middleware to log requests for uploaded files
+router.use('/uploads', (req, res, next) => {
+  console.log(`Request for ${req.url}`);
+  next();
+});
+
+// Serve static files in the 'uploads' folder
+router.use('/uploads', express.static('uploads'));
 
 // Configure multer to store images in a 'uploads' folder
 const storage = multer.diskStorage({
@@ -33,7 +42,10 @@ router.post('/', upload.single('image'), async (req, res) => {
   const { name, price, description, category, availability } = req.body;
   
   // Image URL is set if an image is uploaded
-  const imageUrl = req.file ? req.file.path : '';
+  //const imageUrl = req.file ? `/uploads/${req.file.filename}` : ''; // Update to use 
+  //const imageUrl = req.file ? `uploads/${req.file.filename}` : '';
+  const imageUrl = req.file ? `/uploads/${req.file.filename}` : '';
+
 
   try {
     const newMenuItem = new Menu({
@@ -56,7 +68,7 @@ router.post('/', upload.single('image'), async (req, res) => {
 // Update a menu item by ID (including image upload)
 router.put('/:id', upload.single('image'), async (req, res) => {
   const { name, price, description, category, availability } = req.body;
-  const imageUrl = req.file ? req.file.path : ''; // Update image if uploaded
+  const imageUrl = req.file ? `/uploads/${req.file.filename}` : ''; // Update to use filename
 
   try {
     let menuItem = await Menu.findById(req.params.id);
@@ -103,8 +115,5 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
-
-// Serve static files in the 'uploads' folder
-router.use('/uploads', express.static('uploads'));
 
 module.exports = router;
